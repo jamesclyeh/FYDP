@@ -51,6 +51,13 @@ void testApp::setup(){
 	sat = 158;
 	val = 255;
     thresh = 85;
+    
+    // setup serial communcation
+    serial.listDevices();
+    vector<ofSerialDeviceInfo> deviceList = serial.getDeviceList();
+    
+    int baud = 9600;
+    serial.setup(0, baud);
 }
 
 //--------------------------------------------------------------
@@ -161,6 +168,17 @@ void testApp::draw(){
 
 //--------------------------------------------------------------
 void testApp::keyPressed(int key){
+    if (key == 'k') {
+        // serial communcation:
+        serial.writeByte('k');
+        
+        char response = serial.readByte();
+        if (response == OF_SERIAL_ERROR) {
+            printf("error occured");
+        } else {
+            printf("response is %d", response);
+        }
+    }
 }
 
 //--------------------------------------------------------------

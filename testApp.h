@@ -47,6 +47,9 @@ class testApp : public ofBaseApp{
         // for tracking...
         int hue, sat, val, thresh, blur;
         int hueHigh, hueLow, satHigh, satLow, valHigh, valLow;
+    
+        // for serial communcation
+        ofSerial serial;
 };
 
 #endif

@@ -34,22 +34,36 @@ class testApp : public ofBaseApp{
         ofxCvGrayscaleImage	videoGrayscaleHueImage;
         ofxCvGrayscaleImage	videoGrayscaleSatImage;
         ofxCvGrayscaleImage	videoGrayscaleBriImage;
-        unsigned char *	grayPixels;
+        unsigned char *	grayPixelsForBall;
+        unsigned char * grayPixelsForPlayer;
         ofxCvGrayscaleImage	videoGrayscaleCvImage;
-        cv::Mat mask;
+        ofxCvGrayscaleImage	videoGrayscaleCvImageForPlayer;
+        ofxCvColorImage playerMaskColor;
+        ofxCvGrayscaleImage playerMask;
 
         // for contours
         bool updateBg;
         ofxCvGrayscaleImage grayscaleDiff;
         ofxCvGrayscaleImage grayscaleBg;
         ofxCvContourFinder contourFinder;
+        ofxCvContourFinder contourFinder2;
 
         // for tracking...
-        int hue, sat, val, thresh, blur;
+        int ballHue, ballSat, ballVal;
+        int playerHue, playerSat, playerVal;
+        int thresh, blur;
         int hueHigh, hueLow, satHigh, satLow, valHigh, valLow;
     
         // for serial communcation
         ofSerial serial;
+
+        int hueHighPlayer, hueLowPlayer, satHighPlayer, satLowPlayer, valHighPlayer, valLowPlayer;
+        int calibration;
+    
+        string controlSelection;
+    
+        int originX;
+        int originY;
 };
 
 #endif

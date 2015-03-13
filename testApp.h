@@ -7,6 +7,7 @@
 #include "ofxCv.h"
 #include "ofxControlPanel.h"
 #include "ofxMacamPs3Eye.h"
+#include <math.h>
 
 class testApp : public ofBaseApp{
 
@@ -22,6 +23,8 @@ class testApp : public ofBaseApp{
         void mousePressed(int x, int y, int button);
         void mouseReleased(int x, int y, int button);
         void windowResized(int w, int h);
+    
+        string getLinearMotionDirective(float yDiff);
 
         ofxControlPanel	panel;
 
@@ -35,18 +38,22 @@ class testApp : public ofBaseApp{
         ofxCvGrayscaleImage	videoGrayscaleSatImage;
         ofxCvGrayscaleImage	videoGrayscaleBriImage;
         unsigned char *	grayPixelsForBall;
-        unsigned char * grayPixelsForPlayer;
+        unsigned char * grayPixelsForPlayerA;
+        unsigned char * grayPixelsForPlayerB;
         ofxCvGrayscaleImage	videoGrayscaleCvImage;
-        ofxCvGrayscaleImage	videoGrayscaleCvImageForPlayer;
+        ofxCvGrayscaleImage	videoGrayscaleCvImageForA;
+        ofxCvGrayscaleImage	videoGrayscaleCvImageForB;
         ofxCvColorImage playerMaskColor;
-        ofxCvGrayscaleImage playerMask;
+        ofxCvGrayscaleImage playerMaskA;
+        ofxCvGrayscaleImage playerMaskB;
 
         // for contours
         bool updateBg;
         ofxCvGrayscaleImage grayscaleDiff;
         ofxCvGrayscaleImage grayscaleBg;
         ofxCvContourFinder contourFinder;
-        ofxCvContourFinder contourFinder2;
+        ofxCvContourFinder contourFinderForA;
+        ofxCvContourFinder contourFinderForB;
 
         // for tracking...
         int ballHue, ballSat, ballVal;

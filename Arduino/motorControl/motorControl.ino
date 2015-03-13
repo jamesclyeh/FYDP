@@ -71,20 +71,28 @@ void loop()
       Serial.println("kick");
       rotG.go(700,255,frod_rot_enc_ticks);
       rotF.go(700,255,frod_rot_enc_ticks);
-      delay(40);
+      delay(60);
       rotG.stop();
+      rotF.stop();
+      rotG.go(-700,255,frod_rot_enc_ticks);
+      rotF.go(-700,255,frod_rot_enc_ticks);
+      delay(5);
+      rotG.stop();
+      rotF.stop();
     } else if(input == "a") {
       Serial.println("left");
       transG.go(-700,255,frod_rot_enc_ticks);
       transF.go(-700,255,frod_rot_enc_ticks);
       delay(20);
       transG.stop();
+      transF.stop();
     } else if(input == "d") {
       Serial.println("right");
       transG.go(700,255,frod_rot_enc_ticks);
       transF.go(700,255,frod_rot_enc_ticks);
       delay(20);
       transG.stop();
+      transF.stop();
     } else if(input == "j") {
       Serial.println("left");
       transF.go(-700,255,frod_rot_enc_ticks);

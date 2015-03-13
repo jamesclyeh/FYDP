@@ -80,9 +80,9 @@ void testApp::setup(){
 	ballHue = 25;
 	ballSat = 158;
 	ballVal = 255;
-    playerHue = 12;
-    playerSat = 191;
-    playerVal = 255;
+    playerHue = 107;
+    playerSat = 133;
+    playerVal = 123;
     thresh = 85;
     
     // setup serial communcation
@@ -195,7 +195,7 @@ void testApp::draw(){
     ofSetColor(255, 255, 255);
     videoColorCvImage.draw(0,0, 320,240);
     videoColorHSVCvImage.draw(320+20, 0, 320, 240);
-    // playerMaskA.draw(640+40, 0);
+    playerMaskA.draw(640+40, 0);
     videoGrayscaleHueImage.draw(0,240+20);
     videoGrayscaleSatImage.draw(320+20,240+20);
     videoGrayscaleBriImage.draw(640+40,240+20);
@@ -269,12 +269,18 @@ void testApp::draw(){
 }
 
 string testApp::getLinearMotionDirective(float yDiff) {
-  if (abs(yDiff) < 5)
+  if (abs(yDiff) < 5) {
+    serial.writeByte('w');
     return "Stay";
-  else if (yDiff < 0)
+  }
+  else if (yDiff < 0) {
+    serial.writeByte('a');
     return "Forward";
-  else
+  }
+  else {
+    serial.writeByte('d');
     return "Backward";
+  }
 }
 
 //--------------------------------------------------------------

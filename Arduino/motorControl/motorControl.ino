@@ -68,41 +68,32 @@ void loop()
       delay(5);
     }
     if(input == "w") {
-      Serial.println("w");
+      Serial.println("kick");
       rotG.go(700,255,frod_rot_enc_ticks);
-      delay(80);
-      rotG.stop();
-    } else if(input == "i") {
-      Serial.println("rf");
       rotF.go(700,255,frod_rot_enc_ticks);
-      delay(80);
-//      while(rotF.distRemaining > 0) {
-//        Serial.print(frod_rot_enc_ticks);
-//        Serial.print("\t");
-//        Serial.print(frod_rot_enc_BSet);
-//        Serial.print("\n");
-//      }
-//      Serial.print("z");      
-      rotF.stop();
+      delay(40);
+      rotG.stop();
     } else if(input == "a") {
       Serial.println("left");
       transG.go(-700,255,frod_rot_enc_ticks);
-      delay(200);
+      transF.go(-700,255,frod_rot_enc_ticks);
+      delay(20);
       transG.stop();
     } else if(input == "d") {
       Serial.println("right");
       transG.go(700,255,frod_rot_enc_ticks);
-      delay(200);
+      transF.go(700,255,frod_rot_enc_ticks);
+      delay(20);
       transG.stop();
     } else if(input == "j") {
       Serial.println("left");
       transF.go(-700,255,frod_rot_enc_ticks);
-      delay(200);
+      delay(20);
       transF.stop();
     } else if(input == "l") {
       Serial.println("right");
       transF.go(700,255,frod_rot_enc_ticks);
-      delay(200);
+      delay(20);
       transF.stop();
     }
     

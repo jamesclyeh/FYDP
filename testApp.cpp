@@ -15,18 +15,26 @@ void testApp::setup(){
     videoGrayscaleSatImage.allocate(width, height);
     videoGrayscaleBriImage.allocate(width, height);
     videoGrayscaleCvImage.allocate(width, height);
-    videoGrayscaleCvImageForPlayer.allocate(width, height);
-    playerMask.allocate(width, height);
+    videoGrayscaleCvImageForA.allocate(width, height);
+    videoGrayscaleCvImageForB.allocate(width, height);
+    playerMaskA.allocate(width, height);
+    playerMaskB.allocate(width, height);
     grayscaleDiff.allocate(width, height);
     grayscaleBg.allocate(width, height);
 	grayPixelsForBall = new unsigned char [width * height];
-    grayPixelsForPlayer = new unsigned char [width * height];
+    grayPixelsForPlayerA = new unsigned char [width * height];
+    grayPixelsForPlayerB = new unsigned char [width * height];
     
     ofImage image;
     ofLoadImage(image,"mask.jpg");
     image.update();
     playerMaskColor.setFromPixels(image.getPixels(), width, height);
-    playerMask = playerMaskColor;
+    playerMaskA = playerMaskColor;
+    
+    ofLoadImage(image,"mask2.jpg");
+    image.update();
+    playerMaskColor.setFromPixels(image.getPixels(), width, height);
+    playerMaskB = playerMaskColor;
 
     // Panel Setup
     ofBackground(255, 255, 255);
@@ -43,12 +51,12 @@ void testApp::setup(){
     panel.addSlider("sat high ", "SATHIGH", 30, 0, 255, true);
     panel.addSlider("val low ", "VALLOW", 25, 0, 255, true);
 	panel.addSlider("val high ", "VALHIGH", 25, 0, 255, true);
-    panel.addSlider("hue low ", "HUELOWPLAYER", 5, 0, 255, true);
-    panel.addSlider("hue high ", "HUEHIGHPLAYER", 20, 0, 255, true);
+    panel.addSlider("hue low ", "HUELOWPLAYER", 8, 0, 255, true);
+    panel.addSlider("hue high ", "HUEHIGHPLAYER", 4, 0, 255, true);
     panel.addSlider("sat low ", "SATLOWPLAYER", 30, 0, 255, true);
-    panel.addSlider("sat high ", "SATHIGHPLAYER", 30, 0, 255, true);
-    panel.addSlider("val low ", "VALLOWPLAYER", 25, 0, 255, true);
-    panel.addSlider("val high ", "VALHIGHPLAYER", 25, 0, 255, true);
+    panel.addSlider("sat high ", "SATHIGHPLAYER", 70, 0, 255, true);
+    panel.addSlider("val low ", "VALLOWPLAYER", 58, 0, 255, true);
+    panel.addSlider("val high ", "VALHIGHPLAYER", 32, 0, 255, true);
     panel.addSlider("grey thresh ", "THRESHRANGE", 85, 0, 255, true);
     panel.addSlider("blur kernel ", "BLUR", 11, 0, 21, true);
 
@@ -72,8 +80,8 @@ void testApp::setup(){
 	ballHue = 25;
 	ballSat = 158;
 	ballVal = 255;
-    playerHue = 25;
-    playerSat = 158;
+    playerHue = 12;
+    playerSat = 191;
     playerVal = 255;
     thresh = 85;
     
@@ -127,9 +135,10 @@ void testApp::update(){
         videoGrayscaleBriImage.flagImageChanged();
 
         unsigned char * colorHsvPixels = videoColorHSVCvImage.getPixels();
-        unsigned char * playerMaskPixels = playerMask.getPixels();
-        cv::Mat hsv;
-        cvtColor(ofxCv::toCv(videoColorCvImage), hsv, CV_BGR2HSV);
+        unsigned char * playerMaskPixelsA = playerMaskA.getPixels();
+        unsigned char * playerMaskPixelsB = playerMaskB.getPixels();
+        // cv::Mat hsv;
+        // cvtColor(ofxCv::toCv(videoColorCvImage), hsv, CV_BGR2HSV);
         //inRange(
         //    hsv,
         //    ofxCv::Scalar(ballHue+50-hueLow, ballSat-satLow, ballVal-valLow),
@@ -153,24 +162,31 @@ void testApp::update(){
                           && colorHsvPixels[i*3+1] < (playerSat + satHighPlayer)) &&
                        (colorHsvPixels[i*3+2] > (playerVal - valLowPlayer)
                           && colorHsvPixels[i*3+2] < (playerVal + valHighPlayer)) &&
-                       playerMaskPixels[i] == 255){
-                    grayPixelsForPlayer[i] = 255;
+                       (playerMaskPixelsA[i] == 255 || playerMaskPixelsB[i] == 255)){
+                if (playerMaskPixelsA[i] == 255)
+                  grayPixelsForPlayerA[i] = 255;
+                else if (playerMaskPixelsB[i] == 255)
+                  grayPixelsForPlayerB[i] = 255;
             } else {
                 grayPixelsForBall[i] = 0;
-                grayPixelsForPlayer[i] = 0;
+                grayPixelsForPlayerA[i] = 0;
+                grayPixelsForPlayerB[i] = 0;
             }
         }
 			
         videoGrayscaleCvImage.setFromPixels(grayPixelsForBall, width, height);
-        videoGrayscaleCvImageForPlayer.setFromPixels(grayPixelsForPlayer, width, height);
+        videoGrayscaleCvImageForA.setFromPixels(grayPixelsForPlayerA, width, height);
+        videoGrayscaleCvImageForB.setFromPixels(grayPixelsForPlayerB, width, height);
 
         videoGrayscaleCvImage.blurGaussian(blur);
-        videoGrayscaleCvImageForPlayer.blurGaussian(blur);
+        videoGrayscaleCvImageForA.blurGaussian(blur);
+        videoGrayscaleCvImageForB.blurGaussian(blur);
         
         videoGrayscaleCvImage.threshold(thresh);
-        videoGrayscaleCvImageForPlayer.threshold(thresh);
+        // videoGrayscaleCvImageForA.threshold(thresh);
         contourFinder.findContours(videoGrayscaleCvImage, 5, (width*height)/4, 5, true);
-        contourFinder2.findContours(videoGrayscaleCvImageForPlayer, 2, (width*height)/4, 6, false);
+        contourFinderForA.findContours(videoGrayscaleCvImageForA, 2, (width*height)/4, 3, false);
+        contourFinderForB.findContours(videoGrayscaleCvImageForB, 2, (width*height)/4, 3, false);
     }
 }
 
@@ -179,12 +195,13 @@ void testApp::draw(){
     ofSetColor(255, 255, 255);
     videoColorCvImage.draw(0,0, 320,240);
     videoColorHSVCvImage.draw(320+20, 0, 320, 240);
-    playerMask.draw(640+40, 0);
+    // playerMaskA.draw(640+40, 0);
     videoGrayscaleHueImage.draw(0,240+20);
     videoGrayscaleSatImage.draw(320+20,240+20);
     videoGrayscaleBriImage.draw(640+40,240+20);
     videoGrayscaleCvImage.draw(0,480+40,320,240);
-    videoGrayscaleCvImageForPlayer.draw(320+20,480+40,320,240);
+    videoGrayscaleCvImageForA.draw(320+20,480+40,320,240);
+    videoGrayscaleCvImageForB.draw(640+40,480+40,320,240);
 
     ofSetHexColor(0xffffff);
     //ofxCv::drawMat(mask, 640+40, 0);
@@ -203,7 +220,8 @@ void testApp::draw(){
     }
     if(max_index != -1)
       contourFinder.blobs.at(max_index).draw();
-    contourFinder2.draw();
+    contourFinderForA.draw();
+    contourFinderForB.draw();
 
     panel.draw();
     
@@ -221,10 +239,42 @@ void testApp::draw(){
     ss << "Ball HSV: " << ballHue << " " << ballSat << " " << ballVal << endl;
     ss << "Player HSV: " << playerHue << " " << playerSat << " " << playerVal << endl;
     ss << "Calibration selection: " << controlSelection <<endl;
-    if(max_index != -1)
-      ss << "Ball centroid: x:" << contourFinder.blobs.at(max_index).centroid.x - originX
-         << " y:" <<  contourFinder.blobs.at(max_index).centroid.y - originY << endl;
-    ofDrawBitmapStringHighlight(ss.str(), ofPoint(640+40, 600));
+    int ballY = -1;
+    int ballX = -1;
+    if(max_index != -1) {
+      ballX = contourFinder.blobs.at(max_index).centroid.x - originX;
+      ballY = contourFinder.blobs.at(max_index).centroid.y - originY;
+      ss << "Ball centroid: x:" << ballX << " y:" << ballY << endl;
+    }
+    float a_min = 100000;
+    float b_min = 100000;
+    for (int i=0; i < contourFinderForA.blobs.size(); i++) {
+      float x = contourFinderForA.blobs.at(i).centroid.x - originX - ballX;
+      float y = contourFinderForA.blobs.at(i).centroid.y - originY - ballY;
+      float dist = pow(x, 2) + pow(y, 2);
+      a_min = (abs(y) < a_min) ? y: a_min;
+    }
+    for (int i=0; i < contourFinderForB.blobs.size(); i++) {
+        float x = contourFinderForB.blobs.at(i).centroid.x - originX - ballX;
+        float y = contourFinderForB.blobs.at(i).centroid.y - originY - ballY;
+        float dist = pow(x, 2) + pow(y, 2);
+        b_min = (abs(y) < b_min) ? y: b_min;
+    }
+    ss << a_min << " " << b_min <<endl;
+    
+    ss << "Bar A move " << getLinearMotionDirective(a_min) << endl;
+    ss << "Bar B move " << getLinearMotionDirective(b_min) << endl;
+    
+    ofDrawBitmapStringHighlight(ss.str(), ofPoint(640+40, 200));
+}
+
+string testApp::getLinearMotionDirective(float yDiff) {
+  if (abs(yDiff) < 5)
+    return "Stay";
+  else if (yDiff < 0)
+    return "Forward";
+  else
+    return "Backward";
 }
 
 //--------------------------------------------------------------

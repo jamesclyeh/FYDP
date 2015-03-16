@@ -4,31 +4,33 @@
                                // and http://code.google.com/p/digitalwritefast/
 #include <dcMotorControl.h>
 
+#include <Servo.h>
+
 // It turns out that the regular digitalRead() calls are too slow and bring the arduino down when
 // I use them in the interrupt routines while the motor runs at full speed creating more than
 // 40000 encoder ticks per second per motor.
  
 // goalie rod rotational encoder (EN1, 1A, 2A)
-#define grod_rot_intA 0
-#define grod_rot_intB 1
-#define grod_rot_enc_pinA 2
-#define grod_rot_enc_pinB 3
-#define grod_rot_mot_EN 53
-#define grod_rot_mot_pinA 52
-#define grod_rot_mot_pinB 51
-volatile bool grod_rot_enc_BSet;
-volatile long grod_rot_enc_ticks = 0;
-
-// forward rod rotational encoder (EN2, 3A, 4A)
-#define frod_rot_intA 3
-#define frod_rot_intB 2
-#define frod_rot_enc_pinA 20
-#define frod_rot_enc_pinB 21
-#define frod_rot_mot_EN 50
-#define frod_rot_mot_pinA 49
-#define frod_rot_mot_pinB 48
+#define frod_rot_intA 0
+#define frod_rot_intB 1
+#define frod_rot_enc_pinA 2
+#define frod_rot_enc_pinB 3
+#define frod_rot_mot_EN 53
+#define frod_rot_mot_pinA 52
+#define frod_rot_mot_pinB 51
 volatile bool frod_rot_enc_BSet;
 volatile long frod_rot_enc_ticks = 0;
+
+// forward rod rotational encoder (EN2, 3A, 4A)
+#define grod_rot_intA 3
+#define grod_rot_intB 2
+#define grod_rot_enc_pinA 20
+#define grod_rot_enc_pinB 21
+#define grod_rot_mot_EN 50
+#define grod_rot_mot_pinA 49
+#define grod_rot_mot_pinB 48
+volatile bool grod_rot_enc_BSet;
+volatile long grod_rot_enc_ticks = 0;
 
 // goalie rod translational encoder (EN1, 1A, 2A)
 #define grod_trans_mot_EN 25 
@@ -45,9 +47,17 @@ dcMotorControl rotF = dcMotorControl(frod_rot_mot_EN, frod_rot_mot_pinA, frod_ro
 dcMotorControl transG = dcMotorControl(grod_trans_mot_EN, grod_trans_mot_pinA, grod_trans_mot_pinB);
 dcMotorControl transF = dcMotorControl(frod_trans_mot_EN, frod_trans_mot_pinA, frod_trans_mot_pinB);
 
+Servo myservo;  // create servo object to control a servo 
+                // a maximum of eight servo objects can be created 
+ 
+int pos = 0;    // variable to store the servo position 
+
 void setup()
 {
   Serial.begin(115200);
+  
+  myservo.attach(9);
+  
   pinMode(grod_rot_enc_pinA, INPUT); // sets pin A as input
   digitalWrite(grod_rot_enc_pinA, LOW); // turn on pullup resistors
   pinMode(grod_rot_enc_pinB, INPUT); // sets pin B as input
@@ -67,44 +77,45 @@ void loop()
       input += (char)Serial.read();
       delay(5);
     }
+    
     if(input == "w") {
-      Serial.println("kick");
       rotG.go(700,255,frod_rot_enc_ticks);
-      rotF.go(700,255,frod_rot_enc_ticks);
-      delay(60);
+////      rotF.go(700,255,frod_rot_enc_ticks);
+      delay(40);
       rotG.stop();
-      rotF.stop();
-      rotG.go(-700,255,frod_rot_enc_ticks);
-      rotF.go(-700,255,frod_rot_enc_ticks);
-      delay(5);
-      rotG.stop();
-      rotF.stop();
+//      rotF.stop();
+//      rotG.go(-700,255,frod_rot_enc_ticks);
+//      rotF.go(-700,255,frod_rot_enc_ticks);
+//      rotF.stop();
     } else if(input == "a") {
-      Serial.println("left");
       transG.go(-700,255,frod_rot_enc_ticks);
-      transF.go(-700,255,frod_rot_enc_ticks);
-      delay(20);
+      delay(80);
       transG.stop();
-      transF.stop();
+//      for(pos = 0; pos < 15; pos += 1)  // goes from 0 degrees to 180 degrees 
+//      {                                  // in steps of 1 degree 
+//        myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+//        delay(5);                       // waits 15ms for the servo to reach the position 
+//      } 
     } else if(input == "d") {
-      Serial.println("right");
       transG.go(700,255,frod_rot_enc_ticks);
-      transF.go(700,255,frod_rot_enc_ticks);
-      delay(20);
+      delay(80);
       transG.stop();
-      transF.stop();
+//      for(pos = 15; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees 
+//      {                                
+//        myservo.write(pos);              // tell servo to go to position in variable 'pos' 
+//        delay(5);                       // waits 15ms for the servo to reach the position 
+//      }
     } else if(input == "j") {
-      Serial.println("left");
       transF.go(-700,255,frod_rot_enc_ticks);
-      delay(20);
+      delay(40);
       transF.stop();
     } else if(input == "l") {
-      Serial.println("right");
       transF.go(700,255,frod_rot_enc_ticks);
-      delay(20);
+      delay(40);
       transF.stop();
+    } else if (input != "") {
+      Serial.println(input);
     }
-    
 //  int target = 30;
 //  dc2.go(target,255, frod_rot_enc_ticks);
 //  while(true) {
@@ -123,6 +134,20 @@ void loop()
 //  delay(300);
 
 }
+
+//void serialEvent() {
+//  while (Serial.available()) {
+//    // get the new byte:
+//    char inChar = (char)Serial.read(); 
+//    // add it to the inputString:
+//    inputString += inChar;
+//    // if the incoming character is a newline, set a flag
+//    // so the main loop can do something about it:
+//    if (inChar == '\n') {
+//      stringComplete = true;
+//    } 
+//  }
+//}
  
 // Interrupt service routines for the grod, rot quadrature encoder
 void HandleGRodInterrupt()

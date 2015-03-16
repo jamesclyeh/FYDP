@@ -89,7 +89,7 @@ void testApp::setup(){
     serial.listDevices();
     vector<ofSerialDeviceInfo> deviceList = serial.getDeviceList();
     
-    int baud = 9600;
+    int baud = 115200;
     serial.setup(0, baud);
 
     originX = 0;
@@ -97,6 +97,8 @@ void testApp::setup(){
     
     controlSelection = "ball";
     //playerMask
+    
+    frame = 0;
 }
 
 //--------------------------------------------------------------
@@ -248,39 +250,70 @@ void testApp::draw(){
     }
     float a_min = 100000;
     float b_min = 100000;
-    for (int i=0; i < contourFinderForA.blobs.size(); i++) {
-      float x = contourFinderForA.blobs.at(i).centroid.x - originX - ballX;
-      float y = contourFinderForA.blobs.at(i).centroid.y - originY - ballY;
-      float dist = pow(x, 2) + pow(y, 2);
-      a_min = (abs(y) < a_min) ? y: a_min;
-    }
-    for (int i=0; i < contourFinderForB.blobs.size(); i++) {
-        float x = contourFinderForB.blobs.at(i).centroid.x - originX - ballX;
-        float y = contourFinderForB.blobs.at(i).centroid.y - originY - ballY;
-        float dist = pow(x, 2) + pow(y, 2);
-        b_min = (abs(y) < b_min) ? y: b_min;
-    }
-    ss << a_min << " " << b_min <<endl;
+//    for (int i=0; i < contourFinderForA.blobs.size(); i++) {
+//      float x = contourFinderForA.blobs.at(i).centroid.x - originX - ballX;
+//      float y = contourFinderForA.blobs.at(i).centroid.y - originY - ballY;
+//      float dist = pow(x, 2) + pow(y, 2);
+//      a_min = (abs(y) < a_min) ? y: a_min;
+//    }
+//    for (int i=0; i < contourFinderForB.blobs.size(); i++) {
+//        float x = contourFinderForB.blobs.at(i).centroid.x - originX - ballX;
+//        float y = contourFinderForB.blobs.at(i).centroid.y - originY - ballY;
+//        float dist = pow(x, 2) + pow(y, 2);
+//        b_min = (abs(y) < b_min) ? y: b_min;
+//    }
+//    ss << a_min << " " << b_min <<endl;
     
-    ss << "Bar A move " << getLinearMotionDirective(a_min) << endl;
-    ss << "Bar B move " << getLinearMotionDirective(b_min) << endl;
+    std::vector<float> rodsY;
+    for (int i =0; i < contourFinderForA.blobs.size(); i++) {
+        rodsY.push_back(contourFinderForA.blobs.at(i).centroid.y - originY);
+    }
+    if (rodsY.size() == 3) {
+        std::sort(rodsY.begin(), rodsY.end());
+        float yPos;
+        if (ballY < 90) {
+            yPos = rodsY[0];
+        } else if (ballY > 90 && ballY < 155) {
+            yPos = rodsY[1];
+        } else {
+            yPos = rodsY[2];
+        }
+        a_min = (abs(yPos - ballY) < a_min) ? yPos-ballY: a_min;
+        float xDiff = contourFinderForA.blobs.at(0).centroid.x - originX - ballX;
+        if (frame % 3 == 0) {
+            ss << "Bar A move " << getLinearMotionDirective(a_min, xDiff) << endl;
+            //ss << "Bar B move " << getLinearMotionDirective(b_min) << endl;
+        }
+    }
     
     ofDrawBitmapStringHighlight(ss.str(), ofPoint(640+40, 200));
+    
+    frame++;
 }
 
-string testApp::getLinearMotionDirective(float yDiff) {
-  if (abs(yDiff) < 5) {
-    serial.writeByte('w');
-    return "Stay";
+void testApp::moveLeft() {
+    serial.writeByte('a');
+}
+
+string testApp::getLinearMotionDirective(float yDiff, float xDiff) {
+    string msg;
+  if (abs(yDiff) < 10) {
+    if (abs(xDiff) < 50) {
+      serial.writeByte('w');
+      msg = "Kick";
+    } else {
+        msg = "Stay";
+    }
   }
   else if (yDiff < 0) {
     serial.writeByte('a');
-    return "Forward";
+    msg = "Forward";
   }
   else {
     serial.writeByte('d');
-    return "Backward";
+    msg = "Backward";
   }
+  return msg;
 }
 
 //--------------------------------------------------------------
@@ -314,6 +347,7 @@ void testApp::mouseDragged(int x, int y, int button){
 //--------------------------------------------------------------
 void testApp::mousePressed(int x, int y, int button){
     panel.mousePressed(x,y,button);
+    printf("x = %d y = %d", x, y);
 
     if (x >= 0 && x < 320 && y >= 0 && y < 240 && panel.getValueI("CALIBRATION_TOGGLE") < 64){
         int pixel = y * 320 + x;

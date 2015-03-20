@@ -45,12 +45,12 @@ void testApp::setup(){
 	panel.setWhichColumn(0);
 
     panel.addSlider("Mouse press control", "CALIBRATION_TOGGLE", 0, 0, 255, true);
-	panel.addSlider("hue low ", "HUELOW", 5, 0, 255, true);
+	panel.addSlider("hue low ", "HUELOW", 10, 0, 255, true);
     panel.addSlider("hue high ", "HUEHIGH", 20, 0, 255, true);
-	panel.addSlider("sat low ", "SATLOW", 30, 0, 255, true);
-    panel.addSlider("sat high ", "SATHIGH", 30, 0, 255, true);
-    panel.addSlider("val low ", "VALLOW", 25, 0, 255, true);
-	panel.addSlider("val high ", "VALHIGH", 25, 0, 255, true);
+	panel.addSlider("sat low ", "SATLOW", 20, 0, 255, true);
+    panel.addSlider("sat high ", "SATHIGH", 600, 0, 255, true);
+    panel.addSlider("val low ", "VALLOW", 35, 0, 255, true);
+	panel.addSlider("val high ", "VALHIGH", 15, 0, 255, true);
     panel.addSlider("hue low ", "HUELOWPLAYER", 8, 0, 255, true);
     panel.addSlider("hue high ", "HUEHIGHPLAYER", 4, 0, 255, true);
     panel.addSlider("sat low ", "SATLOWPLAYER", 30, 0, 255, true);
@@ -78,7 +78,7 @@ void testApp::setup(){
     valHighPlayer = 25;
 
 	ballHue = 25;
-	ballSat = 158;
+	ballSat = 175;
 	ballVal = 255;
     playerHue = 107;
     playerSat = 133;
@@ -244,73 +244,135 @@ void testApp::draw(){
     int ballY = -1;
     int ballX = -1;
     if(max_index != -1) {
-      ballX = contourFinder.blobs.at(max_index).centroid.x - originX;
-      ballY = contourFinder.blobs.at(max_index).centroid.y - originY;
-      ss << "Ball centroid: x:" << ballX << " y:" << ballY << endl;
-    }
-    float a_min = 100000;
-    float b_min = 100000;
-//    for (int i=0; i < contourFinderForA.blobs.size(); i++) {
-//      float x = contourFinderForA.blobs.at(i).centroid.x - originX - ballX;
-//      float y = contourFinderForA.blobs.at(i).centroid.y - originY - ballY;
-//      float dist = pow(x, 2) + pow(y, 2);
-//      a_min = (abs(y) < a_min) ? y: a_min;
-//    }
-//    for (int i=0; i < contourFinderForB.blobs.size(); i++) {
-//        float x = contourFinderForB.blobs.at(i).centroid.x - originX - ballX;
-//        float y = contourFinderForB.blobs.at(i).centroid.y - originY - ballY;
-//        float dist = pow(x, 2) + pow(y, 2);
-//        b_min = (abs(y) < b_min) ? y: b_min;
-//    }
-//    ss << a_min << " " << b_min <<endl;
-    
-    std::vector<float> rodsY;
-    for (int i =0; i < contourFinderForA.blobs.size(); i++) {
-        rodsY.push_back(contourFinderForA.blobs.at(i).centroid.y - originY);
-    }
-    if (rodsY.size() == 3) {
-        std::sort(rodsY.begin(), rodsY.end());
-        float yPos;
-        if (ballY < 90) {
-            yPos = rodsY[0];
-        } else if (ballY > 90 && ballY < 155) {
-            yPos = rodsY[1];
+        ballX = contourFinder.blobs.at(max_index).centroid.x - originX;
+        ballY = contourFinder.blobs.at(max_index).centroid.y - originY;
+        ss << "Ball centroid: x:" << ballX << " y:" << ballY << endl;
+        float a_min = 100000;
+        float b_min = 100000;
+        //    for (int i=0; i < contourFinderForA.blobs.size(); i++) {
+        //      float x = contourFinderForA.blobs.at(i).centroid.x - originX - ballX;
+        //      float y = contourFinderForA.blobs.at(i).centroid.y - originY - ballY;
+        //      float dist = pow(x, 2) + pow(y, 2);
+        //      a_min = (abs(y) < a_min) ? y: a_min;
+        //    }
+        //    for (int i=0; i < contourFinderForB.blobs.size(); i++) {
+        //        float x = contourFinderForB.blobs.at(i).centroid.x - originX - ballX;
+        //        float y = contourFinderForB.blobs.at(i).centroid.y - originY - ballY;
+        //        float dist = pow(x, 2) + pow(y, 2);
+        //        b_min = (abs(y) < b_min) ? y: b_min;
+        //    }
+        //    ss << a_min << " " << b_min <<endl;
+        
+        std::vector<float> rodsY;
+        if (ballX < 150) {
+            for (int i =0; i < contourFinderForB.blobs.size(); i++) {
+                rodsY.push_back(contourFinderForB.blobs.at(i).centroid.y - originY);
+            }
+            if (rodsY.size() == 3) {
+                std::sort(rodsY.begin(), rodsY.end());
+                float yPos;
+                if (ballY < 90) {
+                    yPos = rodsY[0];
+                    if (rand()%10 > 2) {
+                        ballY -= (rand()%5) + 12;
+                    }
+                    
+                } else if (ballY > 90 && ballY < 155) {
+                    yPos = rodsY[1];
+                } else {
+                    yPos = rodsY[2];
+                    if (yPos < 210) {
+                        if (rand()%10 > 2) {
+                            ballY += 5*rand() + 10;
+                        }
+                    }
+                }
+                float xDiff = contourFinderForB.blobs.at(0).centroid.x - originX - ballX;
+                if (frame % 3 == 0) {
+                    ss << "Bar B move " << getLinearMotionDirective(yPos-ballY, xDiff, true) << endl;
+                }
+            }
         } else {
-            yPos = rodsY[2];
+            for (int i =0; i < contourFinderForA.blobs.size(); i++) {
+                rodsY.push_back(contourFinderForA.blobs.at(i).centroid.y);
+            }
+            if (rodsY.size() == 3) {
+                std::sort(rodsY.begin(), rodsY.end());
+                float yPos;
+                if (ballY < 90) {
+                    yPos = rodsY[0];
+                    if (rand()%10 > 8) {
+                        ballY += (rand() % 5) + 12;
+                    }
+                } else if (ballY > 90 && ballY < 155) {
+                    yPos = rodsY[1];
+                } else {
+                    yPos = rodsY[2];
+                    if (rand() % 10 > 8) {
+                        ballY -= (rand() % 5) + 12;
+                    }
+                }
+                float xDiff = contourFinderForA.blobs.at(0).centroid.x - ballX;
+                if (frame % 3 == 0) {
+                    ss << "Bar A move " << getLinearMotionDirective(yPos-ballY, xDiff, false) << endl;
+                    //ss << "Bar B move " << getLinearMotionDirective(b_min) << endl;
+                }
+            }
+
         }
-        a_min = (abs(yPos - ballY) < a_min) ? yPos-ballY: a_min;
-        float xDiff = contourFinderForA.blobs.at(0).centroid.x - originX - ballX;
-        if (frame % 3 == 0) {
-            ss << "Bar A move " << getLinearMotionDirective(a_min, xDiff) << endl;
-            //ss << "Bar B move " << getLinearMotionDirective(b_min) << endl;
-        }
+        
+        
+        ofDrawBitmapStringHighlight(ss.str(), ofPoint(640+40, 200));
+        
+        frame++;
     }
-    
-    ofDrawBitmapStringHighlight(ss.str(), ofPoint(640+40, 200));
-    
-    frame++;
+
 }
 
 void testApp::moveLeft() {
     serial.writeByte('a');
 }
 
-string testApp::getLinearMotionDirective(float yDiff, float xDiff) {
+string testApp::getLinearMotionDirective(float yDiff, float xDiff, bool isOffence) {
     string msg;
   if (abs(yDiff) < 10) {
-    if (abs(xDiff) < 50) {
-      serial.writeByte('w');
+    if (abs(xDiff) < 35) {
+        float r = rand() % 100;
+//        if (r < 90) {
+//            isOffence ? serial.writeByte('i') : serial.writeByte('w');
+//        } else if (r >= 90 && r < 95) {
+//            isOffence ? serial.writeByte('j') : serial.writeByte('a');
+//        } else {
+//            isOffence ? serial.writeByte('l') : serial.writeByte('d');
+//        }
+      isOffence ? serial.writeByte('i') : serial.writeByte('w');
       msg = "Kick";
     } else {
         msg = "Stay";
     }
   }
   else if (yDiff < 0) {
-    serial.writeByte('a');
+    int r = 0;
+    if (yDiff > 30) {
+        r = rand() % 100;
+    }
+    if (r > 40) {
+        isOffence ? serial.writeByte('u') : serial.writeByte('q');
+    } else {
+        isOffence ? serial.writeByte('j') : serial.writeByte('a');
+    }
     msg = "Forward";
   }
   else {
-    serial.writeByte('d');
+    int r = 0;
+    if (yDiff > 30) {
+        r = rand() % 100;
+    }
+    if (r > 40) {
+        isOffence ? serial.writeByte('o') : serial.writeByte('e');
+    } else {
+        isOffence ? serial.writeByte('l') : serial.writeByte('d');
+    }
     msg = "Backward";
   }
   return msg;

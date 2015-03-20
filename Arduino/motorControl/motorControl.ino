@@ -80,41 +80,44 @@ void loop()
     
     if(input == "w") {
       rotG.go(700,255,frod_rot_enc_ticks);
-////      rotF.go(700,255,frod_rot_enc_ticks);
       delay(40);
       rotG.stop();
-//      rotF.stop();
-//      rotG.go(-700,255,frod_rot_enc_ticks);
-//      rotF.go(-700,255,frod_rot_enc_ticks);
-//      rotF.stop();
+    } else if(input == "i") {
+      rotF.go(700,255,frod_rot_enc_ticks);
+      delay(40);
+      rotF.stop();
     } else if(input == "a") {
       transG.go(-700,255,frod_rot_enc_ticks);
       delay(80);
       transG.stop();
-//      for(pos = 0; pos < 15; pos += 1)  // goes from 0 degrees to 180 degrees 
-//      {                                  // in steps of 1 degree 
-//        myservo.write(pos);              // tell servo to go to position in variable 'pos' 
-//        delay(5);                       // waits 15ms for the servo to reach the position 
-//      } 
     } else if(input == "d") {
       transG.go(700,255,frod_rot_enc_ticks);
       delay(80);
       transG.stop();
-//      for(pos = 15; pos>=1; pos-=1)     // goes from 180 degrees to 0 degrees 
-//      {                                
-//        myservo.write(pos);              // tell servo to go to position in variable 'pos' 
-//        delay(5);                       // waits 15ms for the servo to reach the position 
-//      }
     } else if(input == "j") {
       transF.go(-700,255,frod_rot_enc_ticks);
-      delay(40);
+      delay(80);
       transF.stop();
     } else if(input == "l") {
       transF.go(700,255,frod_rot_enc_ticks);
-      delay(40);
+      delay(80);
       transF.stop();
-    } else if (input != "") {
-      Serial.println(input);
+    } else if (input == "q") {
+      transG.go(-700,255,frod_rot_enc_ticks);
+      delay(120);
+      transG.stop();
+    } else if (input == "e") {
+      transG.go(700,255,frod_rot_enc_ticks);
+      delay(120);
+      transG.stop();
+    } else if (input == "u") {
+      transF.go(-700,255,frod_rot_enc_ticks);
+      delay(120);
+      transF.stop();
+    } else if (input == "o") {
+      transF.go(-700,255,frod_rot_enc_ticks);
+      delay(120);
+      transF.stop();
     }
 //  int target = 30;
 //  dc2.go(target,255, frod_rot_enc_ticks);

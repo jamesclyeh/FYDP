@@ -10,27 +10,31 @@
 // I use them in the interrupt routines while the motor runs at full speed creating more than
 // 40000 encoder ticks per second per motor.
  
-// goalie rod rotational encoder (EN1, 1A, 2A)
-#define frod_rot_intA 0
-#define frod_rot_intB 1
-#define frod_rot_enc_pinA 2
-#define frod_rot_enc_pinB 3
+// forward rod rotational encoder (EN1, 1A, 2A)
+#define frod_rot_intA 3
+#define frod_rot_intB 2
+#define frod_rot_enc_pinA 20
+#define frod_rot_enc_pinB 21
 #define frod_rot_mot_EN 53
 #define frod_rot_mot_pinA 52
 #define frod_rot_mot_pinB 51
 volatile bool frod_rot_enc_BSet;
 volatile long frod_rot_enc_ticks = 0;
+volatile long frod_wait_kick = 0;
+bool frod_kicking = false;
 
-// forward rod rotational encoder (EN2, 3A, 4A)
-#define grod_rot_intA 3
-#define grod_rot_intB 2
-#define grod_rot_enc_pinA 20
-#define grod_rot_enc_pinB 21
+// goalie rod rotational encoder (EN2, 3A, 4A)
+#define grod_rot_intA 0
+#define grod_rot_intB 1
+#define grod_rot_enc_pinA 2
+#define grod_rot_enc_pinB 3
 #define grod_rot_mot_EN 50
 #define grod_rot_mot_pinA 49
 #define grod_rot_mot_pinB 48
 volatile bool grod_rot_enc_BSet;
 volatile long grod_rot_enc_ticks = 0;
+volatile long grod_wait_kick = 0;
+bool grod_kicking = false;
 
 // goalie rod translational encoder (EN1, 1A, 2A)
 #define grod_trans_mot_EN 25 
@@ -82,10 +86,12 @@ void loop()
       rotG.go(700,255,frod_rot_enc_ticks);
       delay(40);
       rotG.stop();
+<<
     } else if(input == "i") {
       rotF.go(700,255,frod_rot_enc_ticks);
       delay(40);
       rotF.stop();
+//      grod_rot_enc_ticks += 25;
     } else if(input == "a") {
       transG.go(-700,255,frod_rot_enc_ticks);
       delay(80);
@@ -98,6 +104,11 @@ void loop()
       transF.go(-700,255,frod_rot_enc_ticks);
       delay(80);
       transF.stop();
+    } else if(input == "i") {
+      rotF.go(700,255,frod_rot_enc_ticks);
+      delay(40);
+      rotF.stop();
+//      frod_rot_enc_ticks += 25;
     } else if(input == "l") {
       transF.go(700,255,frod_rot_enc_ticks);
       delay(80);
@@ -119,23 +130,6 @@ void loop()
       delay(120);
       transF.stop();
     }
-//  int target = 30;
-//  dc2.go(target,255, frod_rot_enc_ticks);
-//  while(true) {
-  
-//  Serial.print(dc2.currentPos);
-//  delay(300);
-//  target = -30;
-//  dc2.go(target,255,frod_rot_enc_ticks);
-//  while(dc2.distRemaining > 0) {
-//    Serial.print(grod_rot_enc_ticks);
-//    Serial.print("\t");
-//    Serial.print(dc1.distRemaining);
-//    Serial.print("\n");
-//  }
-//  Serial.print(dc2.currentPos);
-//  delay(300);
-
 }
 
 //void serialEvent() {
@@ -151,20 +145,42 @@ void loop()
 //    } 
 //  }
 //}
- 
+
+void centerGRod() {
+    grod_kicking = true;
+    rotG.go(700,255,grod_rot_enc_ticks);
+    delay(1700);
+    rotG.stop();
+    grod_kicking = false;
+}
+
+void centerFRod() {
+  frod_kicking = true;
+  rotF.go(700,255,frod_rot_enc_ticks);
+  delay(1700);
+  rotF.stop();
+  frod_kicking = false;
+} 
+
 // Interrupt service routines for the grod, rot quadrature encoder
 void HandleGRodInterrupt()
 {
   // Test transition; since the interrupt will only fire on 'rising' we don't need to read pin A
   grod_rot_enc_BSet = digitalReadFast(grod_rot_enc_pinB);   // read the input pin
- 
-  // and adjust counter + if A leads B
-  grod_rot_enc_ticks += grod_rot_enc_BSet ? +1 : -1;
-//  rotG.currentPos += grod_rot_enc_BSet ? +1 : -1;
-  rotG.distRemaining -= 1;
-    
-  if(rotG.distRemaining <= 0) {
-    rotG.stop();
+  
+  grod_rot_enc_ticks += (grod_rot_enc_BSet ? -1 : +1) + 1024;
+  grod_rot_enc_ticks = grod_rot_enc_ticks % 1024;
+  
+  if(!grod_kicking) {
+    grod_wait_kick += (grod_rot_enc_BSet ? -1 : +1);
+    grod_wait_kick = grod_wait_kick % 40;
+    if(grod_wait_kick == -39) {
+      grod_kicking = true;
+      grod_wait_kick = 0;
+      centerGRod();
+    }
+  } else {
+     grod_wait_kick = 0;
   }
 }
 
@@ -174,12 +190,18 @@ void HandleFRodInterrupt()
   // Test transition; since the interrupt will only fire on 'rising' we don't need to read pin A
   frod_rot_enc_BSet = digitalReadFast(frod_rot_enc_pinB);   // read the input pin
  
-  // and adjust counter + if A leads B
-  frod_rot_enc_ticks += frod_rot_enc_BSet ? +1 : -1;
-//  rotF.currentPos += frod_rot_enc_BSet ? +1 : -1;
-  rotF.distRemaining -= 1;
-    
-  if(rotF.distRemaining <= 0) {
-    rotF.stop();
+  frod_rot_enc_ticks += (frod_rot_enc_BSet ? -1 : +1) + 1024;
+  frod_rot_enc_ticks = frod_rot_enc_ticks % 1024;
+  
+  if(!frod_kicking) {
+    frod_wait_kick += (frod_rot_enc_BSet ? -1 : +1);
+    frod_wait_kick = frod_wait_kick % 40;
+    if(frod_wait_kick == -39) {
+      frod_kicking = true;
+      frod_wait_kick = 0;
+      centerFRod();
+    }
+  } else {
+     frod_wait_kick = 0;
   }
 }

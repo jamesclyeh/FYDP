@@ -86,7 +86,6 @@ void loop()
       rotG.go(700,255,frod_rot_enc_ticks);
       delay(40);
       rotG.stop();
-<<
     } else if(input == "i") {
       rotF.go(700,255,frod_rot_enc_ticks);
       delay(40);

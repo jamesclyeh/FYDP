@@ -37,31 +37,29 @@ volatile long grod_wait_kick = 0;
 bool grod_kicking = false;
 
 // goalie rod translational encoder (EN1, 1A, 2A)
-#define grod_trans_mot_EN 25 
-#define grod_trans_mot_pinA 26
-#define grod_trans_mot_pinB 27
+#define grod_trans_mot_EN 22 
+#define grod_trans_mot_pinA 23
+#define grod_trans_mot_pinB 24
 
 // forward rod translational encoder (EN2, 3A, 4A)
-#define frod_trans_mot_EN 22
-#define frod_trans_mot_pinA 23
-#define frod_trans_mot_pinB 24
+#define frod_trans_mot_EN 25
+#define frod_trans_mot_pinA 26
+#define frod_trans_mot_pinB 27
 
 dcMotorControl rotG = dcMotorControl(grod_rot_mot_EN, grod_rot_mot_pinA, grod_rot_mot_pinB);
 dcMotorControl rotF = dcMotorControl(frod_rot_mot_EN, frod_rot_mot_pinA, frod_rot_mot_pinB);
 dcMotorControl transG = dcMotorControl(grod_trans_mot_EN, grod_trans_mot_pinA, grod_trans_mot_pinB);
 dcMotorControl transF = dcMotorControl(frod_trans_mot_EN, frod_trans_mot_pinA, frod_trans_mot_pinB);
 
-Servo myservo;  // create servo object to control a servo 
-                // a maximum of eight servo objects can be created 
- 
-int pos = 0;    // variable to store the servo position 
+#define stop_pin 19
+
+volatile boolean isPaused = false;
 
 void setup()
 {
   Serial.begin(115200);
-  
-  myservo.attach(9);
-  
+  pinMode(stop_pin, INPUT);
+  digitalWrite(stop_pin,LOW);
   pinMode(grod_rot_enc_pinA, INPUT); // sets pin A as input
   digitalWrite(grod_rot_enc_pinA, LOW); // turn on pullup resistors
   pinMode(grod_rot_enc_pinB, INPUT); // sets pin B as input
@@ -76,58 +74,64 @@ void setup()
  
 void loop()
 {
+    grod_kicking = false;
+    frod_kicking = false;
     String input = "";
     while(Serial.available() > 0) {
       input += (char)Serial.read();
       delay(5);
     }
-    
-    if(input == "w") {
-      rotG.go(700,255,frod_rot_enc_ticks);
-      delay(40);
-      rotG.stop();
-    } else if(input == "i") {
-      rotF.go(700,255,frod_rot_enc_ticks);
-      delay(40);
-      rotF.stop();
-//      grod_rot_enc_ticks += 25;
-    } else if(input == "a") {
-      transG.go(-700,255,frod_rot_enc_ticks);
-      delay(80);
-      transG.stop();
-    } else if(input == "d") {
-      transG.go(700,255,frod_rot_enc_ticks);
-      delay(80);
-      transG.stop();
-    } else if(input == "j") {
-      transF.go(-700,255,frod_rot_enc_ticks);
-      delay(80);
-      transF.stop();
-    } else if(input == "i") {
-      rotF.go(700,255,frod_rot_enc_ticks);
-      delay(40);
-      rotF.stop();
-//      frod_rot_enc_ticks += 25;
-    } else if(input == "l") {
-      transF.go(700,255,frod_rot_enc_ticks);
-      delay(80);
-      transF.stop();
-    } else if (input == "q") {
-      transG.go(-700,255,frod_rot_enc_ticks);
-      delay(120);
-      transG.stop();
-    } else if (input == "e") {
-      transG.go(700,255,frod_rot_enc_ticks);
-      delay(120);
-      transG.stop();
-    } else if (input == "u") {
-      transF.go(-700,255,frod_rot_enc_ticks);
-      delay(120);
-      transF.stop();
-    } else if (input == "o") {
-      transF.go(-700,255,frod_rot_enc_ticks);
-      delay(120);
-      transF.stop();
+    isPaused = digitalReadFast(stop_pin);
+    if (!isPaused) {
+      if(input == "w") {
+        grod_kicking = true;
+        rotG.go(700,255,frod_rot_enc_ticks);
+        delay(40);
+        rotG.stop();
+        grod_rot_enc_ticks += 25;
+      } else if(input == "i") {
+        frod_kicking = true;
+        rotF.go(700,255,frod_rot_enc_ticks);
+        delay(40);
+        rotF.stop();
+        frod_rot_enc_ticks += 25;
+      } else if(input == "a") {
+        transG.go(-700,255,frod_rot_enc_ticks);
+        delay(80);
+        transG.stop();
+      } else if(input == "d") {
+        transG.go(700,255,frod_rot_enc_ticks);
+        delay(80);
+        transG.stop();
+      } else if(input == "j") {
+        transF.go(-700,255,frod_rot_enc_ticks);
+        delay(80);
+        transF.stop();
+      } else if(input == "i") {
+        rotF.go(700,255,frod_rot_enc_ticks);
+        delay(40);
+        rotF.stop();
+      } else if(input == "l") {
+        transF.go(700,255,frod_rot_enc_ticks);
+        delay(80);
+        transF.stop();
+      } else if (input == "q") {
+        transG.go(-700,255,frod_rot_enc_ticks);
+        delay(120);
+        transG.stop();
+      } else if (input == "e") {
+        transG.go(700,255,frod_rot_enc_ticks);
+        delay(120);
+        transG.stop();
+      } else if (input == "u") {
+        transF.go(-700,255,frod_rot_enc_ticks);
+        delay(120);
+        transF.stop();
+      } else if (input == "o") {
+        transF.go(-700,255,frod_rot_enc_ticks);
+        delay(120);
+        transF.stop();
+      }
     }
 }
 
@@ -146,19 +150,23 @@ void loop()
 //}
 
 void centerGRod() {
+  if (!isPaused) {
     grod_kicking = true;
     rotG.go(700,255,grod_rot_enc_ticks);
-    delay(1700);
+    delay(1000);
     rotG.stop();
     grod_kicking = false;
+  }
 }
 
 void centerFRod() {
-  frod_kicking = true;
-  rotF.go(700,255,frod_rot_enc_ticks);
-  delay(1700);
-  rotF.stop();
-  frod_kicking = false;
+  if (!isPaused) {
+    frod_kicking = true;
+    rotF.go(700,255,frod_rot_enc_ticks);
+    delay(1000);
+    rotF.stop();
+    frod_kicking = false;
+  }
 } 
 
 // Interrupt service routines for the grod, rot quadrature encoder
@@ -194,8 +202,8 @@ void HandleFRodInterrupt()
   
   if(!frod_kicking) {
     frod_wait_kick += (frod_rot_enc_BSet ? -1 : +1);
-    frod_wait_kick = frod_wait_kick % 40;
-    if(frod_wait_kick == -39) {
+    frod_wait_kick = frod_wait_kick % 60;
+    if(frod_wait_kick == -59) {
       frod_kicking = true;
       frod_wait_kick = 0;
       centerFRod();

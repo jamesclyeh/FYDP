@@ -99,6 +99,8 @@ void testApp::setup(){
     //playerMask
     
     frame = 0;
+    prevX = 0;
+    prevY = 0;
 }
 
 //--------------------------------------------------------------
@@ -264,6 +266,13 @@ void testApp::draw(){
         //    ss << a_min << " " << b_min <<endl;
         
         std::vector<float> rodsY;
+        int velX, velY;
+        if (prevX != 0 && prevY != 0) {
+            velX = ballX - prevX;
+            velY = ballY - prevY;
+        }
+        prevX = ballX;
+        prevY = ballY;
         if (ballX < 150) {
             for (int i =0; i < contourFinderForB.blobs.size(); i++) {
                 rodsY.push_back(contourFinderForB.blobs.at(i).centroid.y - originY);
@@ -287,9 +296,19 @@ void testApp::draw(){
                         }
                     }
                 }
+                
                 float xDiff = contourFinderForB.blobs.at(0).centroid.x - originX - ballX;
+                float yDiff = yPos - ballY;
+                if (abs(velX) < 0.5 && abs(velY) < 0.5 && abs(yDiff) < 15) {
+                    int r = rand() % 10;
+                    if (r < 5) {
+                        yDiff += 10;
+                    } else {
+                        yDiff -= 10;
+                    }
+                }
                 if (frame % 3 == 0) {
-                    ss << "Bar B move " << getLinearMotionDirective(yPos-ballY, xDiff, true) << endl;
+                    ss << "Bar B move " << getLinearMotionDirective(rodsY[0], rodsY[2], yDiff, xDiff, true) << endl;
                 }
             }
         } else {
@@ -298,25 +317,47 @@ void testApp::draw(){
             }
             if (rodsY.size() == 3) {
                 std::sort(rodsY.begin(), rodsY.end());
-                float yPos;
-                if (ballY < 90) {
-                    yPos = rodsY[0];
-                    if (rand()%10 > 8) {
-                        ballY += (rand() % 5) + 12;
-                    }
-                } else if (ballY > 90 && ballY < 155) {
-                    yPos = rodsY[1];
+                float yDiff;
+                if (ballX < 215) {
+                    int bgDiffX = 275 - ballX;
+                    int bgDiffY = 115 - ballY;
+                    float yOffset = ((contourFinderForA.blobs.at(1).centroid.x - ballX)/bgDiffX)*bgDiffY;
+                    yDiff = rodsY[1] - (ballY - yOffset);
                 } else {
-                    yPos = rodsY[2];
-                    if (rand() % 10 > 8) {
-                        ballY -= (rand() % 5) + 12;
+                    float yPos;
+                    if (ballY < 90) {
+                        yPos = rodsY[0];
+                        if (rand()%10 > 8) {
+                            ballY += (rand() % 5) + 10;
+                        }
+                    } else if (ballY > 90 && ballY < 155) {
+                        yPos = rodsY[1];
+                    } else {
+                        yPos = rodsY[2];
+                        if (rand() % 10 > 8) {
+                            ballY -= (rand() % 5) + 10;
+                        }
+                    }
+                    yDiff = yPos - ballY;
+                }
+//                int steps = 0;
+//                if (velX != 0) {
+//                    int steps = abs((ballX - 255)/velX);
+//                }
+//                float yProj = yPos - velY*steps;
+                if (abs(velX) < 0.5 && abs(velY) < 0 && abs(yDiff) < 15) {
+                    int r = rand() % 10;
+                    if (r < 5) {
+                        yDiff += 10;
+                    } else {
+                        yDiff -= 10;
                     }
                 }
                 float xDiff = contourFinderForA.blobs.at(0).centroid.x - ballX;
-                if (frame % 3 == 0) {
-                    ss << "Bar A move " << getLinearMotionDirective(yPos-ballY, xDiff, false) << endl;
+//                if (frame % 3 == 0) {
+                ss << "Bar A move " << getLinearMotionDirective(rodsY[0], rodsY[2], yDiff, xDiff, false) << endl;
                     //ss << "Bar B move " << getLinearMotionDirective(b_min) << endl;
-                }
+//                }
             }
 
         }
@@ -333,11 +374,11 @@ void testApp::moveLeft() {
     serial.writeByte('a');
 }
 
-string testApp::getLinearMotionDirective(float yDiff, float xDiff, bool isOffence) {
+string testApp::getLinearMotionDirective(int yBottom, int yTop, float yDiff, float xDiff, bool isOffence) {
     string msg;
   if (abs(yDiff) < 10) {
-    if (abs(xDiff) < 35) {
-        float r = rand() % 100;
+    if ((xDiff < 35 && xDiff > 0) || (xDiff < 0 && xDiff > -25)) {
+//        float r = rand() % 100;
 //        if (r < 90) {
 //            isOffence ? serial.writeByte('i') : serial.writeByte('w');
 //        } else if (r >= 90 && r < 95) {
@@ -352,28 +393,32 @@ string testApp::getLinearMotionDirective(float yDiff, float xDiff, bool isOffenc
     }
   }
   else if (yDiff < 0) {
-    int r = 0;
-    if (yDiff > 30) {
-        r = rand() % 100;
+    if (yTop < 195) {
+        int r = 0;
+        if (yDiff < 30) {
+            r = rand() % 100;
+        }
+        if (r > 40) {
+            isOffence ? serial.writeByte('u') : serial.writeByte('q');
+        } else {
+            isOffence ? serial.writeByte('j') : serial.writeByte('a');
+        }
+        msg = "Forward";
     }
-    if (r > 40) {
-        isOffence ? serial.writeByte('u') : serial.writeByte('q');
-    } else {
-        isOffence ? serial.writeByte('j') : serial.writeByte('a');
-    }
-    msg = "Forward";
   }
   else {
-    int r = 0;
-    if (yDiff > 30) {
-        r = rand() % 100;
+    if (yBottom > 25) {
+        int r = 0;
+        if (yDiff > 30) {
+            r = rand() % 100;
+        }
+        if (r > 40) {
+            isOffence ? serial.writeByte('o') : serial.writeByte('e');
+        } else {
+            isOffence ? serial.writeByte('l') : serial.writeByte('d');
+        }
+        msg = "Backward";
     }
-    if (r > 40) {
-        isOffence ? serial.writeByte('o') : serial.writeByte('e');
-    } else {
-        isOffence ? serial.writeByte('l') : serial.writeByte('d');
-    }
-    msg = "Backward";
   }
   return msg;
 }

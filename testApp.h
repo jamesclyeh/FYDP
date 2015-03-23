@@ -26,7 +26,7 @@ class testApp : public ofBaseApp{
         void mouseReleased(int x, int y, int button);
         void windowResized(int w, int h);
     
-        string getLinearMotionDirective(float yDiff, float xDiff, bool isOffence);
+        string getLinearMotionDirective(int yBottom, int yTop, float yDiff, float xDiff, bool isOffence);
         void moveLeft();
 
         ofxControlPanel	panel;
@@ -74,6 +74,9 @@ class testApp : public ofBaseApp{
     
         int originX;
         int originY;
+    
+    int prevX;
+    int prevY;
     
     int frame;
 };
